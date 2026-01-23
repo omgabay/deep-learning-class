@@ -1,0 +1,7 @@
+# Ignore Python bytecode
+__pycache__/
+*.pyc
+
+# Ignore editor/temp files (optional)
+*.swp
+*.DS_Store
