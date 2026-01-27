@@ -12,6 +12,7 @@ class WeatherForecast:
         and the second dimension represents the measurements.
         """
         self.data = torch.as_tensor(data_raw).view(-1, 10)
+        self.average_daily_temp = self.data.mean(dim=-1)
 
     def find_min_and_max_per_day(self) -> Tuple[torch.Tensor, torch.Tensor]:
         """
@@ -21,7 +22,9 @@ class WeatherForecast:
             min_per_day: tensor of size (num_days,)
             max_per_day: tensor of size (num_days,)
         """
-        raise NotImplementedError
+        min_per_day = self.data.min(dim=-1).values
+        max_per_day = self.data.max(dim=-1).values
+        return (min_per_day, max_per_day)
 
     def find_the_largest_drop(self) -> torch.Tensor:
         """
@@ -31,7 +34,10 @@ class WeatherForecast:
         Returns:
             tensor of a single value, the difference in temperature
         """
-        raise NotImplementedError
+        daily_temp_diff = self.average_daily_temp[1:] - self.average_daily_temp[: -1]
+        
+        biggest_drop =  daily_temp_diff.min() 
+        return biggest_drop
 
     def find_the_most_extreme_day(self) -> torch.Tensor:
         """
@@ -40,7 +46,10 @@ class WeatherForecast:
         Returns:
             tensor with size (num_days,)
         """
-        raise NotImplementedError
+        abs_diff_from_average = torch.abs(self.data - self.average_daily_temp.unsqueeze(-1))
+        idx = abs_diff_from_average.argmax(dim=-1)
+        values = self.data.gather(dim=-1, index=idx.unsqueeze(-1)).squeeze(-1)
+        return values
 
     def max_last_k_days(self, k: int) -> torch.Tensor:
         """
@@ -49,7 +58,10 @@ class WeatherForecast:
         Returns:
             tensor of size (k,)
         """
-        raise NotImplementedError
+        max_per_day = self.data.max(dim=-1).values
+        return max_per_day[-k:]
+   
+
 
     def predict_temperature(self, k: int) -> torch.Tensor:
         """
@@ -62,7 +74,7 @@ class WeatherForecast:
         Returns:
             tensor of a single value, the predicted temperature
         """
-        raise NotImplementedError
+        return self.average_daily_temp[-k: ].mean()
 
     def what_day_is_this_from(self, t: torch.FloatTensor) -> torch.LongTensor:
         """
