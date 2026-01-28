@@ -99,4 +99,5 @@ class WeatherForecast:
         Returns:
             tensor of a single value, the index of the closest data element
         """
-        raise NotImplementedError
+        return torch.abs(self.data - t).sum(dim=-1).argmin()
+
