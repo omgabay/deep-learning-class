@@ -33,7 +33,9 @@ class NearestNeighborClassifier:
         Returns:
             tuple of x and y both torch.Tensor's.
         """
-        raise NotImplementedError
+        data = torch.tensor(x, dtype=torch.float32)
+        labels = torch.tensor(y, dtype=torch.float32)
+        return data, labels
 
     @classmethod
     def compute_data_statistics(cls, x: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
@@ -48,7 +50,12 @@ class NearestNeighborClassifier:
             tuple of mean and standard deviation of the data.
             Both should have a shape [1, D]
         """
-        raise NotImplementedError
+        data_mean = x.mean(dim=1, keepdim=True)
+        data_std = x.std(dim=1, keepdim=True)
+        # TODO: delete the print statements after you have verified your implementation is correct
+        print(f"data_mean: {data_mean}, shape: {data_mean.shape}")
+        print(f"data_std: {data_std}, shape: {data_std.shape}")
+        return data_mean, data_std
 
     def input_normalization(self, x: torch.Tensor) -> torch.Tensor:
         """
