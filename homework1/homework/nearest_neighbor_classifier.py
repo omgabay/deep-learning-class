@@ -50,8 +50,8 @@ class NearestNeighborClassifier:
             tuple of mean and standard deviation of the data.
             Both should have a shape [1, D]
         """
-        data_mean = x.mean(dim=1, keepdim=True)
-        data_std = x.std(dim=1, keepdim=True)
+        data_mean = x.mean(dim=0, keepdim=True)
+        data_std = x.std(dim=0, keepdim=True)
         # TODO: delete the print statements after you have verified your implementation is correct
         print(f"data_mean: {data_mean}, shape: {data_mean.shape}")
         print(f"data_std: {data_std}, shape: {data_std.shape}")
@@ -115,4 +115,4 @@ class NearestNeighborClassifier:
             average value of labels from the k neighbors. Tensor of shape [1]
         """
         _, k_nearest_labels = self.get_k_nearest_neighbor(x, k)
-        raise k_nearest_labels.mean()
+        return k_nearest_labels.mean()
