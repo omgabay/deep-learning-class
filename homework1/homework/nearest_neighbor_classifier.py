@@ -52,9 +52,6 @@ class NearestNeighborClassifier:
         """
         data_mean = x.mean(dim=0, keepdim=True)
         data_std = x.std(dim=0, keepdim=True)
-        # TODO: delete the print statements after you have verified your implementation is correct
-        print(f"data_mean: {data_mean}, shape: {data_mean.shape}")
-        print(f"data_std: {data_std}, shape: {data_std.shape}")
         return data_mean, data_std
 
     def input_normalization(self, x: torch.Tensor) -> torch.Tensor:

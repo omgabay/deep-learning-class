@@ -321,4 +321,7 @@ class PyTorchBasics:
 
         Solution length: 64 characters
         """
-        raise NotImplementedError
+        x_col_vec = x.unsqueeze(1)
+        y_row_vec = y.unsqueeze(0)
+        diff_mat = torch.abs(x_col_vec - y_row_vec)
+        return (diff_mat < 1e-3).any(dim=1).sum()
