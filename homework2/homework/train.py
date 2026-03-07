@@ -7,7 +7,7 @@ import torch
 import torch.utils.tensorboard as tb
 
 from .models import ClassificationLoss, load_model, save_model
-from .utils import load_data
+from .utils import compute_accuracy, load_data
 
 
 def train(
@@ -45,7 +45,7 @@ def train(
 
     # create loss function and optimizer
     loss_func = ClassificationLoss()
-    # optimizer = ...
+    optimizer = torch.optim.Adam(model.parameters(), lr=lr)
 
     global_step = 0
     metrics = {"train_acc": [], "val_acc": []}
@@ -57,14 +57,24 @@ def train(
             metrics[key].clear()
 
         model.train()
-
         for img, label in train_data:
             img, label = img.to(device), label.to(device)
 
-            # TODO: implement training step
-            raise NotImplementedError("Training step not implemented")
+            optimizer.zero_grad()
+            pred = model(img)
 
+            loss = loss_func(pred, label)
+            logger.add_scalar("Loss/train", loss, global_step)
+            loss.backward()
+            optimizer.step()
             global_step += 1
+
+            batch_accuracy = compute_accuracy(pred, label)
+            metrics["train_acc"].append(batch_accuracy)
+
+        # log training accuracy
+        epoch_train_acc = torch.as_tensor(metrics["train_acc"]).mean().item()
+        logger.add_scalar("Accuracy/train", epoch_train_acc, global_step)
 
         # disable gradient computation and switch to evaluation mode
         with torch.inference_mode():
@@ -73,14 +83,13 @@ def train(
             for img, label in val_data:
                 img, label = img.to(device), label.to(device)
 
-                # TODO: compute validation accuracy
-                raise NotImplementedError("Validation accuracy not implemented")
+                pred = model(img)
+                val_batch_acc = compute_accuracy(pred, label)
+                metrics["val_acc"].append(val_batch_acc)
 
         # log average train and val accuracy to tensorboard
-        epoch_train_acc = torch.as_tensor(metrics["train_acc"]).mean()
-        epoch_val_acc = torch.as_tensor(metrics["val_acc"]).mean()
-
-        raise NotImplementedError("Logging not implemented")
+        epoch_val_acc = torch.as_tensor(metrics["val_acc"]).mean().item()
+        logger.add_scalar("Accuracy/validation", epoch_val_acc, global_step)
 
         # print on first, last, every 10th epoch
         if epoch == 0 or epoch == num_epoch - 1 or (epoch + 1) % 10 == 0:
@@ -107,8 +116,9 @@ if __name__ == "__main__":
     parser.add_argument("--lr", type=float, default=1e-3)
     parser.add_argument("--seed", type=int, default=2024)
 
-    # optional: additional model hyperparamters
+    # optional: additional model hyperparameters
     # parser.add_argument("--num_layers", type=int, default=3)
+    parser.add_argument("--hidden_dim", type=int, default=128)
 
     # pass all arguments to train
     train(**vars(parser.parse_args()))

@@ -5,3 +5,13 @@ __pycache__/
 # Ignore editor/temp files (optional)
 *.swp
 *.DS_Store
+
+# Ignore generated homework submission bundles
+homework1/*.zip
+
+
+# Datasets
+homework2/classification_data/
+
+# Ignore Tensorboard logs
+homework2/logs/
