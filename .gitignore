@@ -22,6 +22,11 @@ homework3/drive_data/
 
 # Datasets
 homework2/classification_data/
+homework3/classification_data/
+homework3/drive_data/
 
 # Ignore Tensorboard logs
 homework2/logs/
+homework3/.vscode/settings.json
+homework3/.vscode/settings.json
+homework3/.vscode/settings.json
