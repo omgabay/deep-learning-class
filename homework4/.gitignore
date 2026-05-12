@@ -1,0 +1,40 @@
+# Personal notes & AI context
+CLAUDE.md
+TODO.md
+memory/
+
+# Dataset
+drive_data/
+
+# Model weights
+homework/*.th
+
+# Submission bundles
+*.zip
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Environments
+.env
+.venv
+venv/
+env/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# macOS
+.DS_Store
+
+# IDE
+.vscode/
+.idea/
