@@ -26,8 +26,31 @@ class Classifier(nn.Module):
         self.register_buffer("input_mean", torch.as_tensor(INPUT_MEAN))
         self.register_buffer("input_std", torch.as_tensor(INPUT_STD))
 
-        # TODO: implement
-        pass
+        self.conv_layers = nn.Sequential(
+            # Block 1: (b, 3, 64, 64) -> (b, 32, 32, 32)
+            nn.Conv2d(in_channels, 32, kernel_size=3, padding=1),
+            nn.BatchNorm2d(32),
+            nn.ReLU(),
+            nn.MaxPool2d(2),
+            # Block 2: (b, 32, 32, 32) -> (b, 64, 16, 16)
+            nn.Conv2d(32, 64, kernel_size=3, padding=1),
+            nn.BatchNorm2d(64),
+            nn.ReLU(),
+            nn.MaxPool2d(2),
+            # Block 3: (b, 64, 16, 16) -> (b, 128, 8, 8)
+            nn.Conv2d(64, 128, kernel_size=3, padding=1),
+            nn.BatchNorm2d(128),
+            nn.ReLU(),
+            nn.MaxPool2d(2),
+            # Global Average Pooling: (b, 128, 8, 8) -> (b, 128, 1, 1)
+            nn.AdaptiveAvgPool2d(1),
+        )
+
+        self.classifier = nn.Sequential(
+            nn.Flatten(),          # (b, 128)
+            nn.Dropout(0.3),
+            nn.Linear(128, num_classes),
+        )
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """
@@ -37,13 +60,81 @@ class Classifier(nn.Module):
         Returns:
             tensor (b, num_classes) logits
         """
-        # optional: normalizes the input
         z = (x - self.input_mean[None, :, None, None]) / self.input_std[None, :, None, None]
-
-        # TODO: replace with actual forward pass
-        logits = torch.randn(x.size(0), 6)
+        z = self.conv_layers(z)
+        logits = self.classifier(z)
 
         return logits
+    
+    
+    
+    # class CNNBlock(torch.nn.Module):
+    #     def __init__(self, in_channels, out_channels, stride):
+    #         super().__init__()
+    #         kernel_size = 3
+    #         padding = (kernel_size - 1) // 2
+
+    #         self.c1 = torch.nn.Conv2d(in_channels, out_channels, kernel_size, stride, padding)
+    #         self.c2 = torch.nn.Conv2d(out_channels, out_channels, kernel_size, 1, padding)
+    #         self.c3 = torch.nn.Conv2d(out_channels, out_channels, kernel_size, 1, padding)
+    #         self.relu = torch.nn.ReLU()
+
+    #     def forward(self, x):
+    #         x = self.relu(self.c1(x))
+    #         x = self.relu(self.c2(x))
+    #         x = self.relu(self.c3(x))
+    #         return x
+        
+    # def __init__(
+    #     self,
+    #     in_channels: int = 3,
+    #     num_classes: int = 6,
+    #     channels_l0: int = 24,
+    #     num_cnn_blocks: int = 4,
+    # ):
+    #     """
+    #     A convolutional network for image classification.
+
+    #     Args:
+    #         in_channels: int, number of input channels
+    #         num_classes: int
+    #     """
+    #     super().__init__()
+
+    #     self.register_buffer("input_mean", torch.as_tensor(INPUT_MEAN))
+    #     self.register_buffer("input_std", torch.as_tensor(INPUT_STD))
+
+    #     out_channels = channels_l0
+    #     cnn_layers = [
+    #         torch.nn.Conv2d(in_channels, out_channels, kernel_size=11, stride=2, padding=5),
+    #         torch.nn.ReLU(),
+    #     ]
+        
+    #     in_channels = out_channels
+    #     for _ in range(num_cnn_blocks):
+    #         out_channels = 2 * in_channels
+    #         cnn_layers.append(self.CNNBlock(in_channels, out_channels, stride=2))
+    #         in_channels = out_channels
+            
+    #     cnn_layers.append(torch.nn.AdaptiveAvgPool2d(1))
+    #     cnn_layers.append(torch.nn.Flatten())
+    #     cnn_layers.append(torch.nn.Linear(in_channels, num_classes))
+    #     self.network = torch.nn.Sequential(*cnn_layers)
+        
+   
+
+    # def forward(self, x: torch.Tensor) -> torch.Tensor:
+    #     """
+    #     Args:
+    #         x: tensor (b, 3, h, w) image
+
+    #     Returns:
+    #         tensor (b, num_classes) logits
+    #     """
+    #     # optional: normalizes the input
+    #     z = (x - self.input_mean[None, :, None, None]) / self.input_std[None, :, None, None]
+    #     return self.network(z)
+        
 
     def predict(self, x: torch.Tensor) -> torch.Tensor:
         """
@@ -77,9 +168,56 @@ class Detector(torch.nn.Module):
 
         self.register_buffer("input_mean", torch.as_tensor(INPUT_MEAN))
         self.register_buffer("input_std", torch.as_tensor(INPUT_STD))
+        
+        conv1_channel = 32
+        conv2_channel = 64
+        conv3_channel = 128
+        
+        self.enc1 = nn.Sequential(
+            nn.Conv2d(in_channels, conv1_channel, kernel_size=3, stride=2, padding=1),
+            nn.BatchNorm2d(conv1_channel),
+            nn.ReLU(),
+            nn.Conv2d(conv1_channel, conv1_channel, kernel_size=3, stride=1, padding=1),
+            nn.BatchNorm2d(conv1_channel),
+            nn.ReLU()
+        )
 
-        # TODO: implement
-        pass
+        self.enc2 = nn.Sequential(
+            nn.Conv2d(conv1_channel, conv2_channel, kernel_size=3, stride=2, padding=1),
+            nn.BatchNorm2d(conv2_channel),
+            nn.ReLU(),
+        )
+
+        self.enc3 = nn.Sequential(
+            nn.Conv2d(conv2_channel, conv3_channel, kernel_size=3, stride=2, padding=1),
+            nn.BatchNorm2d(conv3_channel),
+            nn.ReLU(),
+        )
+        
+        
+        self.up2 = nn.ConvTranspose2d(conv3_channel, conv2_channel, 3, stride=2, padding=1, output_padding=1)
+        self.dec2 = nn.Sequential(
+            nn.Conv2d(conv2_channel * 2, conv2_channel, 3, padding=1),
+            nn.BatchNorm2d(conv2_channel),
+            nn.ReLU(),
+        )
+
+        self.up1 = nn.ConvTranspose2d(conv2_channel, conv1_channel, 3, stride=2, padding=1, output_padding=1)
+
+        self.dec1 = nn.Sequential(
+            nn.Conv2d(conv1_channel * 2, conv1_channel, 3, padding=1),
+            nn.BatchNorm2d(conv1_channel),
+            nn.ReLU(),
+        )
+        self.up0 = nn.Sequential(
+            nn.ConvTranspose2d(conv1_channel, conv1_channel, 3, stride=2, padding=1, output_padding=1),
+            nn.BatchNorm2d(conv1_channel),
+            nn.ReLU(),
+        )
+
+        self.segmentation_head = nn.Conv2d(conv1_channel, num_classes, kernel_size=1)
+        self.depth_head = nn.Conv2d(conv1_channel, 1, kernel_size=1)
+
 
     def forward(self, x: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
         """
@@ -97,10 +235,28 @@ class Detector(torch.nn.Module):
         # optional: normalizes the input
         z = (x - self.input_mean[None, :, None, None]) / self.input_std[None, :, None, None]
 
-        # TODO: replace with actual forward pass
-        logits = torch.randn(x.size(0), 3, x.size(2), x.size(3))
-        raw_depth = torch.rand(x.size(0), x.size(2), x.size(3))
+        # Encoder
+        e1 = self.enc1(z)   # (b, 32, 48, 64)
+        e2 = self.enc2(e1)  # (b, 64, 24, 32)
+        e3 = self.enc3(e2)  # (b, 128, 12, 16)
 
+        # Decoder + skips
+        d2 = self.up2(e3)               # (b, 64, 24, 32)
+        d2 = torch.cat([d2, e2], dim=1)  # (b, 128, 24, 32)
+        d2 = self.dec2(d2)               # (b, 64, 24, 32)
+
+        d1 = self.up1(d2)               # (b, 32, 48, 64)
+        d1 = torch.cat([d1, e1], dim=1)  # (b, 64, 48, 64)
+        d1 = self.dec1(d1)               # (b, 32, 48, 64)
+
+        features = self.up0(d1)         # (b, 32, 96, 128)
+        
+        # propagte features to segmentation to classify - left or right track pixel / background pixel.
+        logits = self.segmentation_head(features)
+        
+        # propage to depth estimation network
+        raw_depth = self.depth_head(features).squeeze(1)
+                
         return logits, raw_depth
 
     def predict(self, x: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
@@ -120,7 +276,7 @@ class Detector(torch.nn.Module):
         pred = logits.argmax(dim=1)
 
         # Optional additional post-processing for depth only if needed
-        depth = raw_depth
+        depth = torch.sigmoid(raw_depth)
 
         return pred, depth
 
@@ -205,9 +361,14 @@ def debug_model(batch_size: int = 1):
 
     model = load_model("classifier", in_channels=3, num_classes=6).to(device)
     output = model(sample_batch)
+    print(f"Classifier output shape: {output.shape}")
+    print(f"Classifier size: {calculate_model_size_mb(model):.2f} MB")
 
-    # should output logits (b, num_classes)
-    print(f"Output shape: {output.shape}")
+    detector = load_model("detector", in_channels=3, num_classes=3).to(device)
+    logits, raw_depth = detector(sample_batch)
+    print(f"Detector logits shape: {logits.shape}")
+    print(f"Detector depth shape: {raw_depth.shape}")
+    print(f"Detector size: {calculate_model_size_mb(detector):.2f} MB")
 
 
 if __name__ == "__main__":

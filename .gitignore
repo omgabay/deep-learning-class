@@ -6,12 +6,27 @@ __pycache__/
 *.swp
 *.DS_Store
 
-# Ignore generated homework submission bundles
-homework1/*.zip
+.claude/
 
+
+# Ignore generated homework submission bundles
+*.zip
+
+# Ignore logs folder
+homework3/logs/
+# Ignore dataset folder
+homework3/classification_data/ 
+homework3/drive_data/
+*.jpg
+*.png
 
 # Datasets
 homework2/classification_data/
+homework3/classification_data/
+homework3/drive_data/
 
 # Ignore Tensorboard logs
 homework2/logs/
+homework3/.vscode/settings.json
+homework3/.vscode/settings.json
+homework3/.vscode/settings.json
